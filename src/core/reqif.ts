@@ -248,6 +248,8 @@ function buildDoc(spec: Node, index: number, objects: Map<string, SpecObject>, d
         if (name && !(name in cells)) cells[name] = cell;
       }
       const chapterName = cells[CHAPTER_NAME]?.text.trim() ?? "";
+      // The text a row is known by: ReqIF.Text, or whatever attribute stands in for it in this file.
+      const mainText = (main ? cells[main]?.text : undefined) ?? "";
       const typeName = types.get(obj?.type ?? "")?.name ?? "";
       const heading = chapterName !== ""
         || HEADING_TYPE.test(typeName)
@@ -259,7 +261,7 @@ function buildDoc(spec: Node, index: number, objects: Map<string, SpecObject>, d
         // Numbered by place among the chapters at this level, also those found below plain rows.
         const siblings = tocParent ? tocParent.children : toc;
         number = tocParent ? `${tocParent.number}.${siblings.length + 1}` : String(siblings.length + 1);
-        const name = chapterName || cells[NAME]?.text.trim() || firstLine(cells[TEXT]?.text ?? "") || obj?.name || obj?.id || h.id;
+        const name = chapterName || cells[NAME]?.text.trim() || firstLine(mainText) || obj?.name || obj?.id || h.id;
         node = { key, number, title: firstLine(name, 120), children: [] };
         (tocParent ? tocParent.children : toc).push(node);
       }
@@ -269,7 +271,7 @@ function buildDoc(spec: Node, index: number, objects: Map<string, SpecObject>, d
         depth,
         heading,
         number,
-        title: node?.title ?? (cells[NAME]?.text.trim() || firstLine(cells[TEXT]?.text ?? "") || obj?.id || h.id),
+        title: node?.title ?? (cells[NAME]?.text.trim() || firstLine(mainText) || obj?.id || h.id),
         parent: parent?.key,
         chapter: heading ? key : chapter,
         cells,

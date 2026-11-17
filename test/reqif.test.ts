@@ -86,6 +86,30 @@ describe("parseReqif", () => {
     expect(doc.toc).toEqual([{ key: "0:h1", number: "1", title: "Top", children: [] }]);
     expect(doc.rows.map((r) => r.heading)).toEqual([true, false]);
   });
+
+  it("titles a chapter by the main attribute when the file has no ReqIF.Text", () => {
+    const value = (def: string, body: string) => `<ATTRIBUTE-VALUE-XHTML><DEFINITION><ATTRIBUTE-DEFINITION-XHTML-REF>${def}</ATTRIBUTE-DEFINITION-XHTML-REF></DEFINITION><THE-VALUE><xhtml:div>${body}</xhtml:div></THE-VALUE></ATTRIBUTE-VALUE-XHTML>`;
+    const xml = `<REQ-IF><CORE-CONTENT><REQ-IF-CONTENT>
+      <SPEC-TYPES>
+        <SPEC-OBJECT-TYPE IDENTIFIER="th" LONG-NAME="Heading"><SPEC-ATTRIBUTES><ATTRIBUTE-DEFINITION-XHTML IDENTIFIER="dh" LONG-NAME="_Description"/></SPEC-ATTRIBUTES></SPEC-OBJECT-TYPE>
+        <SPEC-OBJECT-TYPE IDENTIFIER="tr" LONG-NAME="Requirement"><SPEC-ATTRIBUTES><ATTRIBUTE-DEFINITION-XHTML IDENTIFIER="dr" LONG-NAME="_Description"/></SPEC-ATTRIBUTES></SPEC-OBJECT-TYPE>
+      </SPEC-TYPES>
+      <SPEC-OBJECTS>
+        <SPEC-OBJECT IDENTIFIER="_3f2a9c1e-uuid"><TYPE><SPEC-OBJECT-TYPE-REF>th</SPEC-OBJECT-TYPE-REF></TYPE><VALUES>${value("dh", "Einleitung")}</VALUES></SPEC-OBJECT>
+        <SPEC-OBJECT IDENTIFIER="_7b41d0aa-uuid"><TYPE><SPEC-OBJECT-TYPE-REF>tr</SPEC-OBJECT-TYPE-REF></TYPE><VALUES>${value("dr", "Das System muss laden.")}</VALUES></SPEC-OBJECT>
+      </SPEC-OBJECTS>
+      <SPECIFICATIONS><SPECIFICATION IDENTIFIER="s" LONG-NAME="S"><CHILDREN>
+        <SPEC-HIERARCHY IDENTIFIER="h1"><OBJECT><SPEC-OBJECT-REF>_3f2a9c1e-uuid</SPEC-OBJECT-REF></OBJECT><CHILDREN>
+          <SPEC-HIERARCHY IDENTIFIER="h2"><OBJECT><SPEC-OBJECT-REF>_7b41d0aa-uuid</SPEC-OBJECT-REF></OBJECT></SPEC-HIERARCHY>
+        </CHILDREN></SPEC-HIERARCHY>
+      </CHILDREN></SPECIFICATION></SPECIFICATIONS>
+    </REQ-IF-CONTENT></CORE-CONTENT></REQ-IF>`;
+    const doc = parseReqif(xml).docs[0]!;
+    expect(doc.main).toBe("_Description");
+    expect(doc.toc).toEqual([{ key: "0:h1", number: "1", title: "Einleitung", children: [] }]);
+    expect(cellText(doc.rows[0]!, MAIN, doc)).toBe("Einleitung");
+    expect(doc.rows[1]!.title).toBe("Das System muss laden.");
+  });
 });
 
 describe("load .reqifz", () => {
